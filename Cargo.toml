@@ -1,0 +1,7 @@
+[package]
+name = "numox"
+version = "0.1.0"
+authors = ["Alex Mai <alexandertmai@gmail.com>"]
+
+[dependencies]
+num-traits = "0.2"

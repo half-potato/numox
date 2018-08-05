@@ -46,24 +46,7 @@ mod tests {
         }
     }
 
-    /*
     extern crate std;
-    #[test]
-    fn test_ref() {
-        let w: usize = 4;
-        let v: usize = 0;
-        let new_val = 9 as f64;
-        let p = vec![v, v];
-        let mut t: array::Array<f64> = array::Array::eye(w);
-        {
-            let mut r = t.reference();
-            std::mem::replace(r.get_mut(&p), new_val);
-        }
-        //t.get_mut(&p) = &mut(1 as f64);
-        assert_eq!(t.get(&p), &new_val);
-    }
-    */
-
     #[test]
     fn test_slice() {
         let w: usize = 4;
@@ -78,4 +61,38 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_ref_mut() {
+        let w: usize = 4;
+        let v: usize = 0;
+        let new_val = 9 as f64;
+        let p = vec![v, v];
+        let mut t: array::Array<f64> = array::Array::eye(w);
+        let slices = vec![0..4, 0..1];
+        {
+            let mut r = t.slice_mut(slices);
+            std::mem::replace(r.get_mut(&p), new_val);
+        }
+        //t.get_mut(&p) = &mut(1 as f64);
+        assert_eq!(t.get(&p), &new_val);
+    }
+
+
+    #[test]
+    fn test_ref_slice_mut() {
+        let w: usize = 4;
+        let v: usize = 0;
+        let new_val = 9 as f64;
+        let p = vec![v, v];
+        let mut t: array::Array<f64> = array::Array::eye(w);
+        let slices = vec![0..4, 0..1];
+        let replacement: array::Array<f64> = array::Array::ones(&vec![w, 1]);
+        {
+            let mut r = t.slice_mut(slices);
+            r.set(replacement.clone());
+        }
+        for i in 0..w {
+            assert_eq!(t.get(&vec![i, 0]), replacement.get(&vec![i, 0]));
+        }
+    }
 }

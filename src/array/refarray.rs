@@ -19,14 +19,6 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
     type ArrayType = RefArray<'a, T>;
     type InputData = &'a Vec<T>;
 
-    fn new(dat: &'a Vec<T>, shape: Vec<usize>) -> RefArray<'a, T> {
-        let m_d = dat.iter().collect();
-        RefArray {
-            data: m_d,
-            shape: shape.clone(),
-        }
-    }
-
     fn at(&self, ind: &usize) -> &T {
         &self.data[ind.clone()]
     }
@@ -74,6 +66,14 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> RefArray<'a, T> {
     pub fn new_raw(dat: Vec<&'a T>, shape: Vec<usize>) -> RefArray<'a, T> {
         RefArray {
             data: dat,
+            shape: shape.clone(),
+        }
+    }
+
+    pub fn new(dat: &'a Vec<T>, shape: Vec<usize>) -> RefArray<'a, T> {
+        let m_d = dat.iter().collect();
+        RefArray {
+            data: m_d,
             shape: shape.clone(),
         }
     }

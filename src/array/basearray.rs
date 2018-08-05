@@ -9,7 +9,6 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     type ArrayType: BaseArray<'a, T>;
     type InputData;
 
-    fn new(dat: Self::InputData, shape: Vec<usize>) -> Self::ArrayType;
     fn get_shape(&self) -> &Vec<usize>;
     fn at(&self, ind: &usize) -> &T;
     fn get(&self, ind: &Vec<usize>) -> &T;
@@ -59,14 +58,13 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     fn slice_iter(&'a self, slice: &usize, dim: usize) -> Iter<'a, T, Self::ArrayType>;
     //fn iter(&self) -> Iter<'a, T, Self::ArrayType>;
 
-    fn slice<R: std::iter::Iterator<Item=usize> + std::clone::Clone>(&'a self, slices: Vec<R>) -> RefArray<'a, T> {
+    fn slice<R>(&'a self, slices: Vec<R>) -> RefArray<'a, T>
+        where R: std::iter::Iterator<Item=usize> + std::clone::Clone
+    {
         assert_eq!(self.get_shape().len(), slices.len());
         // Iterate through each slice and get the coordinates for each item
-        //let mut coords: Vec<Vec<usize>> = Vec::new();
         let mut coords: Vec<Vec<usize>> = slices[0].clone().map(|x| vec![x.clone()]).collect();
-        //let mut new_shape: Vec<usize> = Vec::new();
         let mut new_shape: Vec<usize> = vec![coords.len()];
-        println!("{:?}", new_shape);
         for i in 1..slices.len() {
             let mut new_coords: Vec<Vec<usize>> = Vec::new();
             let mut shape_c = 0;
@@ -81,7 +79,6 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
             coords = new_coords;
             new_shape.push(shape_c);
         }
-        println!("{:?}", new_shape);
         let mut data: Vec<&'a T> = Vec::new();
         for coord in coords.iter() {
             data.push(self.get(coord));

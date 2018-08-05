@@ -7,44 +7,29 @@ use std::ops::{Index, Range};
 //use std::slice::{SliceIndex};
 
 use super::BaseArray;
+use super::Array;
 use super::Iter;
 
 #[derive(Debug)]
-pub struct RefArray<'a, T: 'a> {
-    data: Vec<&'a mut T>,
+pub struct RefArrayMut<'a, T: 'a> {
+    ref_array: &'a mut Array<T>,
     shape: Vec<usize>,
+    index: Vec<Vec<usize>>,
 }
 
-impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefArray<'a, T> {
-    type ArrayType = RefArray<'a, T>;
+impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefArrayMut<'a, T> {
+    type ArrayType = RefArrayMut<'a, T>;
     type InputData = &'a mut Vec<T>;
 
-    fn new(dat: &'a mut Vec<T>, shape: Vec<usize>) -> RefArray<'a, T> {
-        let m_d = dat.iter_mut().collect();
-        RefArray {
-            data: m_d,
-            shape: shape.clone(),
-        }
-    }
-
     fn at(&self, ind: &usize) -> &T {
-        &self.data[ind.clone()]
-    }
-
-    fn at_mut(&mut self, ind: &usize) -> &mut T {
-        &mut self.data[ind.clone()]
+        let index = self.ref_array.ele_index(&self.index[ind.clone()]);
+        &self.ref_array.at(&index)
     }
 
     fn get(&self, ind: &Vec<usize>) -> &T {
         let index = self.ele_index(ind);
         assert!(self.size() > index);
-        &self.data[index]
-    }
-
-    fn get_mut(&mut self, ind: &Vec<usize>) -> &mut T {
-        let index = self.ele_index(ind);
-        assert!(self.size() > index);
-        &mut self.data[index]
+        &self.at(&index)
     }
 
     fn get_shape(&self) -> &Vec<usize> {
@@ -80,16 +65,35 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
     */
 }
 
-impl<'a, T: num_traits::Num + std::clone::Clone + 'a> RefArray<'a, T> {
-    pub fn new_raw(dat: Vec<&'a mut T>, shape: Vec<usize>) -> RefArray<'a, T> {
-        RefArray {
-            data: dat,
+impl<'a, T: num_traits::Num + std::clone::Clone + 'a> RefArrayMut<'a, T> {
+    pub fn new_raw(ref_array: &'a mut Array<T>, shape: Vec<usize>, index: Vec<Vec<usize>>) -> RefArrayMut<'a, T> {
+        RefArrayMut {
+            ref_array: ref_array,
             shape: shape.clone(),
+            index: index,
+        }
+    }
+
+    pub fn at_mut(&mut self, ind: &usize) -> &mut T {
+        let index = self.ref_array.ele_index(&self.index[ind.clone()]);
+        self.ref_array.at_mut(&index)
+    }
+
+    pub fn get_mut(&mut self, ind: &Vec<usize>) -> &mut T {
+        let index = self.ele_index(ind);
+        assert!(self.size() > index);
+        self.at_mut(&index)
+    }
+
+    pub fn set<R: BaseArray<'a, T>>(&mut self, other: R) {
+        assert_eq!(self.get_shape(), other.get_shape());
+        for i in 0..self.size() {
+            std::mem::replace(self.at_mut(&i), other.at(&i).clone());
         }
     }
 }
 
-impl<'a, T: num_traits::Num + std::clone::Clone> Index<&'a usize> for RefArray<'a, T> {
+impl<'a, T: num_traits::Num + std::clone::Clone> Index<&'a usize> for RefArrayMut<'a, T> {
     type Output = T;
     fn index(&self, index: &usize) -> &T {
         self.get(&self.ele_index_inv(&index))

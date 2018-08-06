@@ -1,6 +1,5 @@
 extern crate num_traits;
 extern crate std;
-use std::ops::{Index, Range};
 
 use super::Iter;
 use super::RefArray;
@@ -18,13 +17,12 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     }
 
     fn ele_index(&self, ind: &Vec<usize>) -> usize {
+        assert_eq!(ind.len(), self.get_shape().len(), "Tried to index array using wrong number of dimensions");
         let mut index: usize = 0;
         for i in 0..ind.len() {
-            let mut mul: usize = 1;
-            for j in 0..i {
-                mul *= self.get_shape()[j];
-            }
-            index += mul*ind[i];
+            assert!(ind[i] < self.get_shape()[i], "Index exceeds dimension of array");
+            let axis_val: usize = (0..i).map(|x| self.get_shape()[x]).product();
+            index += ind[i]*axis_val;
         }
         index
     }
@@ -32,13 +30,22 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     fn get_shape_mut(&mut self) -> &mut Vec<usize>;
 
     fn ele_index_inv(&self, ind: &usize) -> Vec<usize> {
+        assert!(ind < &self.size());
         let mut index: Vec<usize> = vec![0; self.get_shape().len()];
         let mut ind2 = ind.clone();
         for i in 0..self.get_shape().len() {
-            let j = i - self.get_shape().len();
-            let place_val: usize = (j..self.get_shape().len()).product();
-            index[j] = ind2%place_val;
-            ind2 = (ind2/place_val) as usize;
+            if ind2 == 0{
+                break;
+            }
+            // Index in reverse
+            let j = self.get_shape().len() - i - 1;
+            // 
+            let place_val: usize =
+                (0..j)
+                .map(|x| self.get_shape()[x])
+                .product();
+            index[j] = ((ind2 as f64)/(place_val as f64)).floor() as usize;
+            ind2 = ind2%place_val;
         }
         index
     }
@@ -56,9 +63,9 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     }
 
     fn slice_iter(&'a self, slice: &usize, dim: usize) -> Iter<'a, T, Self::ArrayType>;
-    //fn iter(&self) -> Iter<'a, T, Self::ArrayType>;
+    fn iter(&'a self) -> Iter<'a, T, Self::ArrayType>;
 
-    fn slice<R>(&'a self, slices: Vec<R>) -> RefArray<'a, T>
+    fn slice<R>(&'a self, slices: &Vec<R>) -> RefArray<'a, T>
         where R: std::iter::Iterator<Item=usize> + std::clone::Clone
     {
         assert_eq!(self.get_shape().len(), slices.len());
@@ -86,12 +93,3 @@ pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
         RefArray::new_raw(data, new_shape)
     }
 }
-
-/*
-impl<'a, T: num_traits::Num + std::clone::Clone> Index<ArrayIterator<'a, T>> for BaseArray<T> {
-    type Output = Array<T>;
-    fn index(&self, index: ArrayIterator<'a, T>) -> &BaseArray<T> {
-        // Output reference to previous array
-    }
-}
-*/

@@ -3,7 +3,7 @@
 extern crate num_traits;
 extern crate std;
 
-use std::ops::{Index, Range};
+use std::ops::{Index};
 //use std::slice::{SliceIndex};
 
 use super::BaseArray;
@@ -51,7 +51,6 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
         )
     }
 
-    /*
     fn iter(&'a self) -> Iter<'a, T, Self> {
         Iter::new(
             self,
@@ -59,7 +58,6 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
             Some(self.get_shape().clone()),
         )
     }
-    */
 }
 
 impl<'a, T: num_traits::Num + std::clone::Clone + 'a> RefArray<'a, T> {

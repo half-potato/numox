@@ -3,10 +3,11 @@
 extern crate num_traits;
 extern crate std;
 
-use std::ops::{Index, Range};
-//use std::slice::{SliceIndex};
+use std::ops::{Index};
 
 use super::BaseArray;
+use super::MDArray;
+use super::MutArray;
 use super::Array;
 use super::Iter;
 
@@ -17,7 +18,21 @@ pub struct RefArrayMut<'a, T: 'a> {
     index: Vec<Vec<usize>>,
 }
 
-impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefArrayMut<'a, T> {
+impl<'a, T> RefArrayMut<'a, T>
+    where T: num_traits::Num + std::clone::Clone + 'a
+{
+    pub fn new_raw(ref_array: &'a mut Array<T>, shape: Vec<usize>, index: Vec<Vec<usize>>) -> RefArrayMut<'a, T> {
+        RefArrayMut {
+            ref_array: ref_array,
+            shape: shape.clone(),
+            index: index,
+        }
+    }
+}
+
+impl<'a, T> BaseArray<'a, T> for RefArrayMut<'a, T> 
+    where T: num_traits::Num + std::clone::Clone + 'a
+{
     type ArrayType = RefArrayMut<'a, T>;
     type InputData = &'a mut Vec<T>;
 
@@ -54,7 +69,6 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
         )
     }
 
-    /*
     fn iter(&'a self) -> Iter<'a, T, Self> {
         Iter::new(
             self,
@@ -62,35 +76,44 @@ impl<'a, T: num_traits::Num + std::clone::Clone + 'a> BaseArray<'a, T> for RefAr
             Some(self.get_shape().clone()),
         )
     }
-    */
 }
 
-impl<'a, T: num_traits::Num + std::clone::Clone + 'a> RefArrayMut<'a, T> {
-    pub fn new_raw(ref_array: &'a mut Array<T>, shape: Vec<usize>, index: Vec<Vec<usize>>) -> RefArrayMut<'a, T> {
-        RefArrayMut {
-            ref_array: ref_array,
-            shape: shape.clone(),
-            index: index,
-        }
-    }
+impl<'a, T> MutArray<'a, T> for RefArrayMut<'a, T>
+    where T: num_traits::Num + std::clone::Clone + 'a
+{
 
-    pub fn at_mut(&mut self, ind: &usize) -> &mut T {
+    fn at_mut(&mut self, ind: &usize) -> &mut T {
         let index = self.ref_array.ele_index(&self.index[ind.clone()]);
         self.ref_array.at_mut(&index)
     }
 
-    pub fn get_mut(&mut self, ind: &Vec<usize>) -> &mut T {
+    fn get_mut(&mut self, ind: &Vec<usize>) -> &mut T {
         let index = self.ele_index(ind);
         assert!(self.size() > index);
         self.at_mut(&index)
     }
 
-    pub fn set<R: BaseArray<'a, T>>(&mut self, other: R) {
+    fn set_at(&mut self, ind: &usize, val: &T) {
+        std::mem::replace(self.at_mut(ind), val.clone());
+    }
+
+    fn set<R: BaseArray<'a, T>>(&mut self, other: R) {
         assert_eq!(self.get_shape(), other.get_shape());
         for i in 0..self.size() {
-            std::mem::replace(self.at_mut(&i), other.at(&i).clone());
+            self.set_at(&i, other.at(&i));
         }
     }
+
+    fn set_scalar(&mut self, other: T) {
+        for i in 0..self.size() {
+            self.set_at(&i, &other);
+        }
+    }
+}
+
+impl<'a, T> MDArray<'a, T> for RefArrayMut<'a, T> 
+    where T: num_traits::Num + std::clone::Clone + 'a
+{
 }
 
 impl<'a, T: num_traits::Num + std::clone::Clone> Index<&'a usize> for RefArrayMut<'a, T> {

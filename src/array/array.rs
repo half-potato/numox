@@ -1,10 +1,11 @@
-//#![feature(range_contains)]
-
 extern crate num_traits;
 extern crate std;
+extern crate rand;
 
-use std::ops::{Index};
+use std::ops::{Index, Range};
 
+use rand::prelude::*;
+use rand::distributions::{Standard, Distribution, Uniform, StandardNormal, uniform};
 use super::BaseArray;
 use super::MDArray;
 use super::RefArrayMut;
@@ -16,6 +17,52 @@ use super::RefArray;
 pub struct Array<T> {
     data: Vec<T>,
     shape: Vec<usize>,
+}
+
+
+impl<'a, T> Array<T>
+    where T: num_traits::Num + std::clone::Clone + 'a, 
+             Standard: Distribution<T>,
+             StandardNormal: Distribution<T>,
+{
+
+    pub fn rand_gaussian(shape: &Vec<usize>, min: &T, max: &T) -> Array<T> {
+        Self::rand_range(shape, min, max, StandardNormal)
+    }
+
+    pub fn rand_uniform(shape: &Vec<usize>, min: &T, max: &T) -> Array<T> {
+        Self::rand_range(shape, min, max, Standard)
+    }
+    
+    pub fn rand_range<R> (shape: &Vec<usize>, min: &T, max: &T, distrib: R) -> Array<T> 
+        where R: rand::distributions::Distribution<T>
+    {
+        let mut shell = Self::new_full(shape, num_traits::identities::one());
+        let mut rng = thread_rng();
+        let range = max.clone()-min.clone();
+        for i in 0..shell.size() {
+            let val: T = rng.sample(&distrib);
+            shell.set_at(&i, &(range.clone()*val+min.clone()));
+        }
+        shell
+    }
+    
+    pub fn rand_distrib<R> (shape: &Vec<usize>, mul: &Option<T>, distrib: R) -> Array<T> 
+        where R: rand::distributions::Distribution<T>
+    {
+        let mut shell = Self::new_full(shape, num_traits::identities::one());
+        let mut rng = thread_rng();
+        for i in 0..shell.size() {
+            let val: T = rng.sample(&distrib);
+            shell.set_at(&i, &(match mul.clone() {
+                Some(v) => (val * v),
+                None => val,
+            }));
+            
+        }
+        shell
+    }
+
 }
 
 impl<'a, T> Array<T>
@@ -153,7 +200,7 @@ impl<'a, T> MutArray<'a, T> for Array<T>
     }
 
     fn set_at(&mut self, ind: &usize, val: &T) {
-        std::mem::replace(self.at_mut(ind), val.clone());
+        *self.at_mut(ind) = val.clone();
     }
 
     fn set<R: BaseArray<'a, T>>(&mut self, other: R) {

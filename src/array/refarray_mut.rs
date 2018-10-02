@@ -1,5 +1,3 @@
-//#![feature(range_contains)]
-
 extern crate num_traits;
 extern crate std;
 

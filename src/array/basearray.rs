@@ -3,6 +3,7 @@ extern crate std;
 
 use super::Iter;
 use super::RefArray;
+use std::ops::{Index, Range};
 
 pub trait BaseArray<'a, T: num_traits::Num + std::clone::Clone + 'a> {
     type ArrayType: BaseArray<'a, T>;

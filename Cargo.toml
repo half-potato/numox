@@ -5,3 +5,4 @@ authors = ["Alex Mai <alexandertmai@gmail.com>"]
 
 [dependencies]
 num-traits = "0.2"
+rand = "0.5.4"

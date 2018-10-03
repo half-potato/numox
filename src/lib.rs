@@ -1,6 +1,5 @@
 extern crate rand;
 pub mod base;
-pub mod array;
 
 #[cfg(test)]
 mod tests {

@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["Alex Mai <alexandertmai@gmail.com>"]
 
 [dependencies]
-num-traits = "0.2"
+num = "0.2"
 rand = "0.5.4"
+cv = { git = "https://github.com/nebgnahz/cv-rs.git" }
